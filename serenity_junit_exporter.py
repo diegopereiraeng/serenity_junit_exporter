@@ -151,9 +151,9 @@ def process_json_file(json_file, root):
     with open(json_file) as f:
         data = json.load(f)
 
-    #show json content
-    print(f"\033[34mProcessing file: {json_file}\033[0m")
-    # print(data)
+    if os.getenv('PLUGIN_DEBUG', 'false') == "true":
+        #show json content
+        print(f"\033[34mProcessing file: {json_file}\033[0m")
 
     test_case_name = data.get('testCaseName', data.get('scenarioId', 'UnnamedTestCase'))
     # debuf test case name if UnnamedTestCase
@@ -162,7 +162,6 @@ def process_json_file(json_file, root):
         # print json content first level content keys and values
         first_level_keys = data.keys()
         first_level_values = data.values()
-        
         print(first_level_keys)
         print(first_level_values)
 
@@ -176,8 +175,8 @@ def process_json_file(json_file, root):
 
     # duration = sum(step['duration'] for step in data.get('testSteps', [])) / 1000.0
     result = data.get('result', 'UNKNOWN')
-    
-    print(f"\033[34mProcessing test case: {test_case_name}, Result: {result}\033[0m")
+    if os.getenv('PLUGIN_DEBUG', 'false') == "true":
+        print(f"\033[34mProcessing test case: {test_case_name}, Result: {result}\033[0m")
 
     if 'dataTable' in data and data['dataTable'].get('rows'):
         
@@ -185,7 +184,8 @@ def process_json_file(json_file, root):
             row_values = ', '.join(row['values'])
             test_name = f"{method_name} {row_values} - {test_case_name}"
             result = row.get('result', 'UNKNOWN')
-            print(f"\033[34mDEBUG: Processing parameterized test case: {test_name}, Result: {result}\033[0m")
+            if os.getenv('PLUGIN_DEBUG', 'false') == "true":
+                print(f"\033[34mDEBUG: Processing parameterized test case: {test_name}, Result: {result}\033[0m")
             # check results is UNDEFINED skip
             if result != "UNDEFINED":
                 # duration is divded by the number of rows excluding from rows count with result = "UNDEFINED"
@@ -195,7 +195,8 @@ def process_json_file(json_file, root):
                 create_test_case_element(testsuite, test_name, new_duration, result, data.get('testFailureCause') if result != "SUCCESS" else None)
     else:
         test_name = f"{method_name} - {test_case_name}"
-        print(f"\033[34mDEBUG: Processing single test case: {test_name}, Result: {data.get('result', 'UNKNOWN')}\033[0m")
+        if os.getenv('PLUGIN_DEBUG', 'false') == "true":
+            print(f"\033[34mDEBUG: Processing single test case: {test_name}, Result: {data.get('result', 'UNKNOWN')}\033[0m")
         create_test_case_element(testsuite, test_name, duration, result, data.get('testFailureCause') if result != "SUCCESS" else None)
 
 def generate_junit_report(directory, output_file):
@@ -269,7 +270,7 @@ def generate_junit_report(directory, output_file):
         error_details_table.add_row([colorize("Total Errors",Colors.FAIL), colorize(total_errors,Colors.FAIL)])
         print(error_details_table)
 
-    threshold = float(os.environ.get('PLUGIN_THRESHOLD', '100'))  # Default to 100 if not set
+    threshold = float(os.environ.get('PLUGIN_THRESHOLD', '0'))  # Default to 100 if not set
     status = colorize("PASSED",Colors.OKGREEN) if failure_rate <= threshold else colorize("FAILED",Colors.FAIL)
     threshold_table.add_row([colorize(f"{threshold}%",Colors.WARNING) , colorize(f"{failure_rate:.2f}%",Colors.OKGREEN) if failure_rate <= threshold else colorize(f"{failure_rate:.2f}%",Colors.FAIL) , status])
 
