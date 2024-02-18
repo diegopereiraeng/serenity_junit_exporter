@@ -155,7 +155,7 @@ def process_json_file(json_file, root):
         #show json content
         print(f"\033[34mProcessing file: {json_file}\033[0m")
 
-    test_case_name = data.get('testCaseName', data.get('scenarioId', 'UnnamedTestCase'))
+    test_case_name = data.get('testCaseName', data.get('userStory', 'UnnamedTestCase').get('storyName', 'UnnamedTestCase') )
     # debuf test case name if UnnamedTestCase
     if test_case_name == 'UnnamedTestCase':
         print(f"\033[34mDEBUG: UnnamedTestCase found in {json_file}\033[0m")
@@ -182,7 +182,7 @@ def process_json_file(json_file, root):
         
         for row in data['dataTable']['rows']:
             row_values = ', '.join(row['values'])
-            test_name = f"{method_name} {row_values} - {test_case_name}"
+            test_name = f"{method_name} ({row_values}) - {test_case_name}"
             result = row.get('result', 'UNKNOWN')
             if os.getenv('PLUGIN_DEBUG', 'false') == "true":
                 print(f"\033[34mDEBUG: Processing parameterized test case: {test_name}, Result: {result}\033[0m")
