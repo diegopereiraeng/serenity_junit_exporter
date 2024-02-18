@@ -166,6 +166,7 @@ def process_json_file(json_file, root):
         print(first_level_values)
 
     method_name = data.get('methodName', 'UnnamedMethod')  # Fallback for methodName
+    story_name = data.get('userStory', 'UnnamedStory').get('storyName', 'UnnamedStory')
 
     testsuite_name = data.get('name', 'UnnamedTest')
     testsuite = ET.SubElement(root, 'testsuite', name=testsuite_name, tests=str(len(data['dataTable']['rows'])) if 'dataTable' in data and data['dataTable'].get('rows') else "1")
@@ -182,7 +183,7 @@ def process_json_file(json_file, root):
         
         for row in data['dataTable']['rows']:
             row_values = ', '.join(row['values'])
-            test_name = f"{method_name} ({row_values}) - {test_case_name}"
+            test_name = f"{story_name} ({row_values} {method_name})"
             result = row.get('result', 'UNKNOWN')
             if os.getenv('PLUGIN_DEBUG', 'false') == "true":
                 print(f"\033[34mDEBUG: Processing parameterized test case: {test_name}, Result: {result}\033[0m")
