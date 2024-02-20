@@ -100,42 +100,41 @@ def sanitize_for_xml(input_text):
     return sanitized_text
 
 def create_test_case_element(testsuite, name, duration, result, error_info=None):
-    """Creates a testcase element with potential failure or error."""
     global total_tests, total_failures, total_errors, total_failure_errors, separator, failure_table, error_table
 
     sanitized_name = sanitize_for_xml(name)
     testcase = ET.SubElement(testsuite, 'testcase', attrib={'name': sanitized_name, 'time': str(duration)})
     total_tests += 1
     
-    # For failures, use the 'testFailureMessage' and append the last stack trace element.
     if result == "FAILURE":
         total_failures += 1
         total_failure_errors += 1
-    # For errors, use the 'message' from the 'exception' field and append the last stack trace element.
     elif result == "ERROR":
         total_errors += 1
         total_failure_errors += 1
     
     failure_message = error_info['message'] if error_info and 'message' in error_info else "Test failed" if result == "FAILURE" else "Test encountered an error"
 
-    if error_info and 'stackTrace' in error_info:
-        # Get the last item from the stack trace
-        last_stack_trace = error_info['stackTrace'][-1]
+    # Check if 'stackTrace' is present and not empty
+    if error_info and 'stackTrace' in error_info and error_info['stackTrace']:
+        last_stack_trace = error_info['stackTrace'][-1]  # This line caused the error
         full_stack_trace = format_stack_trace(error_info['stackTrace'])
-        # Adjusted table structure to include detailed information
         
-        failure_table.add_row([sanitized_name, colorize_multiline(failure_message, Colors.WARNING) , colorize_multiline(full_stack_trace, Colors.FAIL )]) if result == "FAILURE" else error_table.add_row([sanitized_name, colorize_multiline(failure_message, Colors.WARNING) , colorize_multiline(full_stack_trace, Colors.FAIL )])
+        failure_table.add_row([sanitized_name, colorize_multiline(failure_message, Colors.WARNING), colorize_multiline(full_stack_trace, Colors.FAIL)]) if result == "FAILURE" else error_table.add_row([sanitized_name, colorize_multiline(failure_message, Colors.WARNING), colorize_multiline(full_stack_trace, Colors.FAIL)])
 
         class_method = f"{last_stack_trace.get('declaringClass', 'Unknown')}.{last_stack_trace.get('methodName', 'method')}"
         file_name = f"({last_stack_trace.get('fileName', 'Unknown')})"
-        file_line = f"({last_stack_trace.get('lineNumber', 'Unknown')})"
-        # Append the last stack trace to the failure message
-        # verify if env var "PLUGIN_FULL_STACK_TRACE" is set to true and change failure message
-        failure_message += f"\nLast stack trace:\n {class_method} \n \nFile: {file_name} \nLine Nummber:{file_line}"
+        file_line = f"line {last_stack_trace.get('lineNumber', 'Unknown')}"  # Changed to make it clearer
+        failure_message += f"\nLast stack trace:\n{class_method}\nFile: {file_name}\nLine Number: {file_line}"
         failure_message = f"{failure_message}\n{class_method} {file_name} {file_line}\n{separator}\n{full_stack_trace}" if os.environ.get('PLUGIN_FULL_STACK_TRACE', 'false').lower() == 'true' else failure_message
+    else:
+        # Handle cases with no stack trace
+        failure_message += "\nNo stack trace available."
+
     if result != "SUCCESS":
         failure_message = sanitize_for_xml(failure_message)
         failure = ET.SubElement(testcase, 'failure', attrib={'message': failure_message, 'type': "failure"})
+
 
 
 def format_stack_trace(stack_trace):
