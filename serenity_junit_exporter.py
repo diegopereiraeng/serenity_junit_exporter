@@ -300,7 +300,10 @@ def generate_junit_report(directory, output_file):
         if failure_rate > threshold:
             exit(1)
         else:
-            exit(0)
+            if total_tests < 1:
+                exit(2)
+            else:
+                exit(0)
 
 # Function to write environment variables to the .env file
 def write_env_file(variables, file_path):
